@@ -1,0 +1,17 @@
+# === Raiz do Monorepo ===
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# === Isolamento Python (backend-services) ===
+backend-services/.venv/
+backend-services/__pycache__/
+backend-services/*.pyc
+
+# === Isolamento Java (admin-panel) ===
+admin-panel/target/
+admin-panel/.gradle/
+admin-panel/build/
+admin-panel/*.jar
+admin-panel/*.war
