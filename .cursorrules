@@ -1,0 +1,25 @@
+# Cervejariadoedy — Monorepo (projeto independente)
+
+## Contexto
+Projeto separado do SAP Agent Orchestrator. Trabalhar sempre nesta pasta raiz;
+não misturar código, `.env`, Supabase nem portas com outros repositórios.
+
+## Estrutura
+- `backend-services/` — API Python (FastAPI + Supabase)
+- `admin-panel/` — painel administrativo Java
+- `supabase-config/` — migrations e configuração Supabase deste projeto
+
+## Stack
+- Backend: FastAPI → Supabase PostgreSQL
+- Homologação local: porta **8002** (não usar 8001 — reservada ao SAP Agent)
+- Admin panel: porta a definir (ex. 8080)
+
+## Regras
+1. Não commitar `.env`; usar `.env.example` como template.
+2. `supabase-config/migrations/`: numerar sequencialmente (`001_...`); scripts idempotentes.
+3. Nunca editar migrations já aplicadas — criar nova migration numerada.
+4. venv Python isolado em `backend-services/.venv/`.
+5. Supabase: projeto próprio no dashboard (não reutilizar credenciais do SAP Agent).
+
+## Em caso de dúvida
+Perguntar antes de deploy em produção ou alterar contratos de API partilhados com o admin-panel.

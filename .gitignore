@@ -3,6 +3,8 @@
 .idea/
 .vscode/
 *.log
+.env
+backend-services/.env
 
 # === Isolamento Python (backend-services) ===
 backend-services/.venv/
