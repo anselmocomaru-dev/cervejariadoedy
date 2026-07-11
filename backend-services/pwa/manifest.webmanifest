@@ -1,0 +1,19 @@
+{
+  "name": "Cervejaria do Edy",
+  "short_name": "Edy",
+  "description": "Cardápio digital e pedidos por mesa",
+  "start_url": "/cliente",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/pwa/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

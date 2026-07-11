@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Cervejaria do Edy</title>
+  <link rel="manifest" href="/pwa/manifest.webmanifest" />
+  <link rel="stylesheet" href="/pwa/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-row">
+      <div class="header-text">
+        <h1 id="header-title">Cervejaria do Edy</h1>
+        <p id="header-sub">Peça direto da sua mesa</p>
+      </div>
+      <div class="header-actions">
+        <button
+          type="button"
+          id="header-total-comanda-badge"
+          class="header-total-badge hidden"
+          data-valor="0"
+          aria-label="Total consumido na mesa hoje"
+        >
+          R$ 0,00
+        </button>
+        <button type="button" id="btn-open-comanda" class="btn-header-comanda hidden" aria-label="Ver extrato da mesa">
+          Extrato
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="toast" class="toast" role="alert"></div>
+
+  <!-- Boas-vindas / identificação -->
+  <section id="screen-welcome" class="screen">
+    <div class="welcome-card">
+      <div class="logo">🍺</div>
+      <h2>Bem-vindo!</h2>
+      <p>Informe seus dados para abrir o cardápio digital da sua mesa.</p>
+      <form id="form-welcome">
+        <div class="form-group">
+          <label for="input-nome">Seu nome *</label>
+          <input id="input-nome" type="text" placeholder="Como podemos te chamar?" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="input-tel">WhatsApp (opcional)</label>
+          <input id="input-tel" type="tel" placeholder="(11) 99999-0000" autocomplete="tel" />
+        </div>
+        <button type="submit" class="btn btn-primary">Ver cardápio</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <section id="screen-loading" class="screen hidden">
+    <p class="loading">Carregando cardápio...</p>
+  </section>
+
+  <!-- Erro de mesa / QR -->
+  <section id="screen-erro-mesa" class="screen hidden">
+    <div class="welcome-card">
+      <div class="logo">⚠️</div>
+      <h2>Mesa não identificada</h2>
+      <p id="erro-mesa-msg">QR Code inválido ou mesa não ativa. Chame o garçom.</p>
+      <p class="loading" style="margin-top:1rem;font-size:0.85rem">
+        Escaneie o QR Code da sua mesa ou peça ao garçom um link válido.
+      </p>
+      <p id="erro-mesa-dev" class="loading hidden" style="margin-top:1rem;font-size:0.85rem">
+        Homologação local:
+        <a href="/homolog" target="_blank" rel="noopener">abrir links de teste das mesas</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Cardápio -->
+  <section id="screen-cardapio" class="screen hidden">
+    <nav id="cat-tabs" class="cat-tabs" aria-label="Categorias"></nav>
+    <div id="menu-list" class="menu-list"></div>
+  </section>
+
+  <!-- Sucesso / acompanhamento -->
+  <section id="screen-success" class="screen hidden">
+    <div class="success-screen">
+      <div class="icon" id="success-icon">✅</div>
+      <h2 id="success-title">Pedido enviado!</h2>
+      <p id="success-msg">A cozinha já recebeu seu pedido.</p>
+      <div id="status-pedido-cliente" class="badge status-pendente" role="status">PENDENTE</div>
+      <p id="status-msg-cliente" class="status-msg">Pedido recebido pela cozinha...</p>
+      <button type="button" id="btn-ver-extrato-success" class="btn btn-secondary" style="margin-top:1rem;max-width:280px;margin-inline:auto">
+        Ver extrato da mesa
+      </button>
+      <button type="button" id="btn-novo-pedido" class="btn btn-primary" style="margin-top:1rem;max-width:280px;margin-inline:auto">
+        Fazer outro pedido
+      </button>
+    </div>
+  </section>
+
+  <!-- Barra do carrinho -->
+  <footer id="cart-bar" class="cart-bar hidden">
+    <div id="cart-summary" class="summary"><span>Nenhum item</span></div>
+    <button type="button" id="btn-open-cart" class="btn-cart" disabled>Ver pedido</button>
+  </footer>
+
+  <!-- Sheet carrinho -->
+  <div id="sheet-overlay" class="sheet-overlay"></div>
+  <aside id="cart-sheet" class="cart-sheet" aria-label="Carrinho">
+    <div class="sheet-header">
+      <h2>Seu pedido</h2>
+      <button type="button" id="btn-close-cart" class="sheet-close" aria-label="Fechar">×</button>
+    </div>
+    <div id="cart-items" class="cart-items"></div>
+    <div class="sheet-footer">
+      <div class="total">
+        <span>Total</span>
+        <span id="cart-total">R$ 0,00</span>
+      </div>
+      <button type="button" id="btn-confirm" class="btn btn-primary">Confirmar pedido</button>
+    </div>
+  </aside>
+
+  <!-- Sheet extrato comanda -->
+  <aside id="comanda-sheet" class="cart-sheet" aria-label="Extrato da mesa">
+    <div class="sheet-header">
+      <h2>Extrato da mesa</h2>
+      <button type="button" id="btn-close-comanda" class="sheet-close" aria-label="Fechar">×</button>
+    </div>
+    <div id="comanda-resumo" class="comanda-resumo"></div>
+    <div id="extrato-comanda-container" class="comanda-items"></div>
+    <div class="sheet-footer">
+      <div id="divisao-conta-panel" class="divisao-conta hidden">
+        <p class="divisao-conta-label">Dividir conta</p>
+        <div class="divisao-conta-ctrl" aria-label="Número de pessoas">
+          <button type="button" id="btn-pessoas-minus" class="divisao-btn" aria-label="Menos pessoas">−</button>
+          <span id="pessoas-divisao-val">2</span>
+          <button type="button" id="btn-pessoas-plus" class="divisao-btn" aria-label="Mais pessoas">+</button>
+          <span class="divisao-conta-hint">pessoas</span>
+        </div>
+        <p id="divisao-conta-resultado" class="divisao-conta-resultado"></p>
+      </div>
+      <div class="total">
+        <span>Total consumido hoje</span>
+        <span id="total-comanda-mesa">R$ 0,00</span>
+      </div>
+    </div>
+  </aside>
+
+  <script src="/pwa/app.js" defer></script>
+</body>
+</html>

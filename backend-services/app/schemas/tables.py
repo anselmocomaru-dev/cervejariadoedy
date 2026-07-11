@@ -43,6 +43,10 @@ class PedidoCreate(BaseModel):
     mesa_id: int
 
 
+class PedidoStatusUpdate(BaseModel):
+    status: PedidoStatus
+
+
 class Pedido(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -61,8 +65,40 @@ class PedidoItemCreate(BaseModel):
     preco_unitario: Decimal = Field(ge=0, decimal_places=2)
 
 
+class PedidoItemAdd(BaseModel):
+    item_id: int
+    quantidade: int = Field(gt=0)
+    observacao: str | None = None
+
+
 class PedidoItem(PedidoItemCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id_item_pedido: int
     pedido_id: UUID
+
+
+class ComandaRodadaItem(BaseModel):
+    id_item_pedido: int
+    nome: str
+    quantidade: int = Field(gt=0)
+    preco_unitario: Decimal = Field(ge=0, decimal_places=2)
+    subtotal: Decimal = Field(ge=0, decimal_places=2)
+    observacao: str | None = None
+
+
+class ComandaRodada(BaseModel):
+    sequencia_rodada: int = Field(ge=1)
+    pedido_id: UUID
+    status: PedidoStatus
+    total_rodada: Decimal = Field(ge=0, decimal_places=2)
+    criado_em: datetime
+    itens: list[ComandaRodadaItem]
+
+
+class ComandaMesa(BaseModel):
+    total_comanda: Decimal = Field(ge=0, decimal_places=2)
+    pedidos_vinculados: int = Field(ge=0)
+    resumo_status: dict[str, int]
+    rodadas: list[ComandaRodada]
+    mensagem: str | None = None

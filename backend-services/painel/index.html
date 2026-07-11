@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cozinha / Bar — Cervejariadoedy</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --card: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #aaa;
+      --accent: #f5c518;
+      --danger: #e53935;
+      --ok: #43a047;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1rem 1.25rem;
+      background: #111;
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    h1 { margin: 0; font-size: 1.25rem; }
+    #status { font-size: 0.85rem; color: var(--muted); }
+    #status.live { color: var(--ok); }
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1rem;
+      border-left: 6px solid var(--accent);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .card.novo {
+      animation: pulse 1.2s ease 2;
+      box-shadow: 0 0 0 3px var(--accent);
+    }
+    .card.urgente {
+      border-left-color: var(--danger);
+      background: linear-gradient(135deg, #3a2020, var(--card));
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    .mesa {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+    ul { margin: 0; padding-left: 1.1rem; }
+    li { margin-bottom: 0.35rem; }
+    .acoes { margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-preparo { background: var(--accent); color: #111; }
+    .btn-entregue { background: var(--ok); color: #fff; }
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      padding: 3rem 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cozinha / Bar — Pedidos ao vivo</h1>
+    <span id="status">A ligar...</span>
+  </header>
+  <main id="grid"></main>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const statusEl = document.getElementById("status");
+    const vistos = new Set();
+    let audioCtx;
+
+    function beep() {
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.frequency.value = 880;
+        g.gain.value = 0.08;
+        o.start();
+        setTimeout(() => o.stop(), 180);
+      } catch (_) {}
+    }
+
+    function minutosDesde(iso) {
+      return (Date.now() - new Date(iso).getTime()) / 60000;
+    }
+
+    function formatarItens(itens) {
+      if (!itens || !itens.length) return "<li><em>Sem itens ainda</em></li>";
+      return itens.map((i) => {
+        const nome = i.cardapio?.nome || `Item #${i.item_id}`;
+        const obs = i.observacao ? ` <small>(${i.observacao})</small>` : "";
+        return `<li>${i.quantidade}x ${nome}${obs}</li>`;
+      }).join("");
+    }
+
+    function renderCard(p) {
+      const mesa = p.mesas?.numero_mesa || p.mesa_id;
+      const min = minutosDesde(p.criado_em);
+      const urgente = min >= 10;
+      const novo = !vistos.has(p.id_pedido);
+      vistos.add(p.id_pedido);
+      if (novo) beep();
+
+      const cls = ["card", novo ? "novo" : "", urgente ? "urgente" : ""].filter(Boolean).join(" ");
+      const botoes =
+        p.status === "PENDENTE"
+          ? `<button class="btn-preparo" data-id="${p.id_pedido}" data-status="EM_PREPARO">Em preparo</button>`
+          : p.status === "EM_PREPARO"
+          ? `<button class="btn-entregue" data-id="${p.id_pedido}" data-status="ENTREGUE">Entregue</button>`
+          : "";
+
+      return `
+        <article class="${cls}" data-pedido="${p.id_pedido}">
+          <div class="mesa">Mesa ${mesa}</div>
+          <div class="meta">${p.status} · ${Math.floor(min)} min · R$ ${Number(p.total_pedido).toFixed(2)}</div>
+          <ul>${formatarItens(p.pedido_itens)}</ul>
+          <div class="acoes">${botoes}</div>
+        </article>`;
+    }
+
+    async function carregarPainel() {
+      const res = await fetch("/api/pedidos/painel");
+      const pedidos = await res.json();
+      if (!pedidos.length) {
+        grid.innerHTML = '<p class="empty">Nenhum pedido em fila. Aguardando clientes...</p>';
+        return;
+      }
+      grid.innerHTML = pedidos.map(renderCard).join("");
+      grid.querySelectorAll("button[data-status]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          const status = btn.dataset.status;
+          await fetch(`/api/pedidos/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          });
+          carregarPainel();
+        });
+      });
+    }
+
+    function ligarRealtime() {
+      const es = new EventSource("/api/pedidos/painel/stream");
+      es.onopen = () => {
+        statusEl.textContent = "Realtime activo";
+        statusEl.classList.add("live");
+      };
+      es.onmessage = (ev) => {
+        const data = JSON.parse(ev.data);
+        if (data.type === "refresh") carregarPainel();
+      };
+      es.onerror = () => {
+        statusEl.textContent = "Realtime desligado — a tentar reconectar...";
+        statusEl.classList.remove("live");
+      };
+    }
+
+    carregarPainel();
+    ligarRealtime();
+    setInterval(carregarPainel, 60000);
+  </script>
+</body>
+</html>

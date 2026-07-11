@@ -9,7 +9,8 @@ backend-services/.env
 # === Isolamento Python (backend-services) ===
 backend-services/.venv/
 backend-services/__pycache__/
-backend-services/*.pyc
+backend-services/**/__pycache__/
+backend-services/**/*.pyc
 
 # === Isolamento Java (admin-panel) ===
 admin-panel/target/

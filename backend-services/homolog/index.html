@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Links de teste — Cervejaria do Edy</title>
+  <style>
+    :root { color-scheme: dark; --bg: #0f0f0f; --card: #1a1a1a; --text: #f5f5f5; --muted: #aaa; --accent: #f59e0b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 1.5rem; }
+    h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
+    p { color: var(--muted); line-height: 1.5; }
+    .grid { display: grid; gap: 0.75rem; margin-top: 1.25rem; max-width: 520px; }
+    a.mesa-link {
+      display: block; padding: 1rem 1.1rem; border-radius: 12px;
+      background: var(--card); color: var(--text); text-decoration: none;
+      border: 1px solid #333;
+    }
+    a.mesa-link:hover { border-color: var(--accent); }
+    a.mesa-link strong { color: var(--accent); }
+    .hint { margin-top: 1.5rem; font-size: 0.9rem; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Links de teste (homologação)</h1>
+  <p>Clique numa mesa para abrir o PWA do cliente com a tela de identificação (nome).</p>
+  <div id="list" class="grid"><p class="muted">Carregando mesas...</p></div>
+  <p class="hint">Não use <code>UUID_DA_MESA</code> na URL — copie um link real abaixo.</p>
+  <script>
+    fetch("/api/mesas/links-homolog")
+      .then((r) => {
+        if (!r.ok) throw new Error("Endpoint indisponível (APP_ENV=development?)");
+        return r.json();
+      })
+      .then((mesas) => {
+        const el = document.getElementById("list");
+        if (!mesas.length) {
+          el.innerHTML = "<p class='err'>Nenhuma mesa encontrada.</p>";
+          return;
+        }
+        el.innerHTML = mesas
+          .map(
+            (m) =>
+              `<a class="mesa-link" href="${m.url_cliente}"><strong>Mesa ${m.numero_mesa}</strong><br><span style="font-size:0.85rem;color:#aaa">${m.url_cliente}</span></a>`
+          )
+          .join("");
+      })
+      .catch((err) => {
+        document.getElementById("list").innerHTML =
+          `<p class="err">${err.message || "Erro ao carregar links."}</p>`;
+      });
+  </script>
+</body>
+</html>
